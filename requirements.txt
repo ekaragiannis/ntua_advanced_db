@@ -1,0 +1,4 @@
+geographiclib==2.0
+geopy==2.4.1
+py4j==0.10.9.7
+pyspark==3.5.0

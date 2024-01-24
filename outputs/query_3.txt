@@ -1,0 +1,30 @@
+# 2 executors
+Exec time: 5.549390554428101 sec
+
+# 3 executors
+Exec time: 4.085432052612305 sec
+
+# 4 executors
+Exec time: 7.317911863327026 sec
+
++----------------------+-----------+
+|Victim Descent        |crime_total|
++----------------------+-----------+
+|Hispanic/Latin/Mexican|144        |
+|White                 |116        |
+|Black                 |101        |
+|Unknown               |39         |
+|Other                 |32         |
+|Other Asian           |6          |
+|Chinese               |1          |
++----------------------+-----------+
+
++----------------------+-----------+
+|Victim Descent        |crime_total|
++----------------------+-----------+
+|Other                 |2          |
+|Other Asian           |1          |
+|White                 |1          |
+|Hispanic/Latin/Mexican|1          |
++----------------------+-----------+
+

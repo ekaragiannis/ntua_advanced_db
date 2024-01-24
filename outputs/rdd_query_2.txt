@@ -1,0 +1,7 @@
+Exec time: 81.71326994895935 sec
+
+night 223171
+evening 174170
+afternoon 139129
+morning 117035
+
