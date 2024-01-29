@@ -7,7 +7,6 @@ HDFS_DATA_DIR = "hdfs://okeanos-master:54310/data"
 spark = SparkSession.builder.appName(APP_NAME).getOrCreate()
 
 csv_file_path = f"{HDFS_DATA_DIR}/Full_Data"
-
 df = spark.read.csv(csv_file_path, header=True)
 
 start_time = time()
@@ -30,11 +29,8 @@ sql_query = """
 """
 results_df = spark.sql(sql_query)
 
+results_df.show(results_df.count(), truncate=False)
 exec_time = time() - start_time
-
-print(f'\n\nExec time: {exec_time} sec\n\n')
-print(results_df.show(results_df.count(), truncate=False))
+print(f"\n\nExec time: {exec_time} sec\n\n")
 
 spark.stop()
-
-

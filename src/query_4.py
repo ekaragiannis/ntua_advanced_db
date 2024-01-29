@@ -101,7 +101,7 @@ for join_df in [inner_join_df, cross_join_df]:
     results_df_list.append(results_df)
 
 for df in results_df_list:
-    print(df.show(df.count(), truncate=False))
+    df.show(df.count(), truncate=False)
     print()
 
 spark.stop()

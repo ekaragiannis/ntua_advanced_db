@@ -87,12 +87,12 @@ for asc in [True, False]:
     
     results.append(results_df)
 
-exec_time = time() - start_time
 
-print(f'\n\nExec time: {exec_time} sec\n\n')
 for df in results:
-    print(df.show(df.count(), truncate=False))
+    df.show(df.count(), truncate=False)
     print()
+exec_time = time() - start_time
+print(f'\n\nExec time: {exec_time} sec\n\n')
 
 spark.stop()
 

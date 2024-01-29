@@ -1,12 +1,3 @@
-# 2 executors
-Exec time: 5.549390554428101 sec
-
-# 3 executors
-Exec time: 4.085432052612305 sec
-
-# 4 executors
-Exec time: 7.317911863327026 sec
-
 +----------------------+-----------+
 |Victim Descent        |crime_total|
 +----------------------+-----------+

@@ -34,10 +34,9 @@ res_rdd = (
 )
 
 exec_time = time() - start_time
-
 print(f"\n\nExec time: {exec_time} sec\n\n")
-results = res_rdd.collect()
 
+results = res_rdd.collect()
 for row in results:
     print(row[0], row[1])
 
