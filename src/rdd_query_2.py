@@ -41,4 +41,3 @@ for row in results:
     print(row[0], row[1])
 
 sc.stop()
-

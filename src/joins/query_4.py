@@ -4,16 +4,24 @@ from pyspark.sql.functions import (
     col,
     length,
     udf,
-    min as spark_min,
+    year,
+    avg,
+    count,
+    desc,
 )
 from geopy.distance import geodesic
 import sys, time
 
-APP_NAME = "DF_Query_4"
+APP_NAME = "Inner_Join_Query_4"
 HDFS_DATA_DIR = "hdfs://okeanos-master:54310/data"
+
+spark = SparkSession.builder.appName(APP_NAME).getOrCreate()
 
 basic_csv_path = f"{HDFS_DATA_DIR}/Full_Data"
 departmens_csv_path = f"{HDFS_DATA_DIR}/LAPD_Police_Stations.csv"
+
+basic_df = spark.read.csv(basic_csv_path, header=True)
+departments_df = spark.read.csv(departmens_csv_path, header=True)
 
 
 def compute_distance(lat1, lon1, lat2, lon2):
@@ -24,70 +32,62 @@ def compute_distance(lat1, lon1, lat2, lon2):
 
 compute_distance_udf = udf(compute_distance, FloatType())
 
+results_df_list = []
 
-def main():
-    spark = SparkSession.builder.appName(APP_NAME).getOrCreate()
-    basic_df = spark.read.csv(basic_csv_path, header=True)
-    departments_df = spark.read.csv(departmens_csv_path, header=True)
+start_time = time.time()
 
-    filtered_df = basic_df.filter(
-        col("Weapon Used Cd").startswith("1")
-        & (length(col("Weapon Used Cd")) == 3)
-        & ((col("LAT") > 0) & (col("LON") < 0))
+filtered_df = basic_df.filter(
+    col("Weapon Used Cd").startswith("1")
+    & (length(col("Weapon Used Cd")) == 3)
+    & ((col("LAT") > 0) & (col("LON") < 0))
+)
+
+filtered_df = filtered_df.withColumn("AREA", filtered_df["AREA"].cast("integer"))
+departments_df = departments_df.withColumn(
+    "PREC", departments_df["PREC"].cast("integer")
+)
+
+departments_df = departments_df.hint(sys.argv[1])
+
+join_df = filtered_df.join(departments_df, col("AREA") == col("PREC")).withColumn(
+    "distance",
+    compute_distance_udf(
+        filtered_df["LAT"],
+        filtered_df["LON"],
+        departments_df["Y"],
+        departments_df["X"],
+    ),
+)
+
+results_df_list = []
+
+results_df = (
+    join_df.withColumn("year", year("Date Rptd"))
+    .groupBy("year")
+    .agg(
+        avg("distance").alias("average distance"), count("*").alias("total crimes")
     )
+    .select("year", "average distance", "total crimes")
+    .orderBy("year")
+)
+results_df_list.append(results_df)
 
-    filtered_df = filtered_df.withColumn("AREA", filtered_df["AREA"].cast("integer"))
-    departments_df = departments_df.withColumn(
-        "PREC", departments_df["PREC"].cast("integer")
+results_df = (
+    join_df.withColumnRenamed("DIVISION", "division")
+    .groupBy("division")
+    .agg(
+        avg("distance").alias("average distance"), count("*").alias("total crimes")
     )
+    .select("division", "average distance", "total crimes")
+    .orderBy(desc("total crimes"))
+)
+results_df_list.append(results_df)
 
-    select = sys.argv[1]
-    departments_df = departments_df.hint(sys.argv[2])
+for df in results_df_list:
+    df.explain()
+    df.show(df.count(), truncate=False)
 
-    start_time = time.time()
-    if select == "1":
-        inner_join(filtered_df, departments_df)
-    elif select == "2":
-        cross_join(filtered_df, departments_df)
-    else:
-        print("Wrong input")
-    exec_time = time.time() - start_time
-    print(f"Exec time: {exec_time} seconds")
+exec_time = time.time() - start_time
+print(f'\n\nExec time: {exec_time} sec\n\n')
 
-
-def inner_join(df1, df2):
-    join_df = df1.join(df2, col("AREA") == col("PREC")).withColumn(
-        "distance",
-        compute_distance_udf(
-            df1["LAT"],
-            df1["LON"],
-            df2["Y"],
-            df2["X"],
-        ),
-    )
-    join_df.explain()
-    join_df.show()
-
-
-def cross_join(df1, df2):
-    window_spec = Window.partitionBy("DR_NO").orderBy("distance")
-    join_df = (
-        df1.crossJoin(df2.withColumnRenamed("LOCATION", "department location"))
-        .withColumn(
-            "distance",
-            compute_distance_udf(
-                df1["LAT"],
-                df1["LON"],
-                df2["Y"],
-                df2["X"],
-            ),
-        )
-        .withColumn("min_distance", spark_min("distance").over(window_spec))
-        .filter(col("distance") == col("min_distance"))
-        .drop("min_distance")
-    )
-    join_df.explain()
-    join_df.show()
-
-
-main()
+spark.stop()

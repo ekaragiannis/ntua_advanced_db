@@ -34,3 +34,4 @@ exec_time = time() - start_time
 print(f"\n\nExec time: {exec_time} sec\n\n")
 
 spark.stop()
+
